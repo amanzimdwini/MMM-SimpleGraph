@@ -1,3 +1,5 @@
+/* MMM-SimpleGraph.js — CLEAN, VALID, DEBUG VERSION */
+
 Module.register("MMM-SimpleGraph", {
   defaults: {
     width: 400,
@@ -8,6 +10,7 @@ Module.register("MMM-SimpleGraph", {
   },
 
   getScripts() {
+    console.log("MMM-SimpleGraph: getScripts() called");
     return [
       "https://cdn.jsdelivr.net/npm/chart.js/dist/chart.umd.js",
       "https://cdn.jsdelivr.net/npm/luxon/build/global/luxon.min.js",
@@ -16,24 +19,36 @@ Module.register("MMM-SimpleGraph", {
   },
 
   start() {
+    console.log("MMM-SimpleGraph: START() called");
+
     this.dataPoints = [];
 
-    const resolvedPath = this.file(this.config.dataFile);
+    const resolvedPath = this.config.dataFile;
+    console.log("MMM-SimpleGraph: resolvedPath =", resolvedPath);
+
     this.sendSocketNotification("LOAD_DATA", resolvedPath);
 
     setInterval(() => {
+      console.log("MMM-SimpleGraph: sending LOAD_DATA again");
       this.sendSocketNotification("LOAD_DATA", resolvedPath);
     }, this.config.updateInterval);
   },
 
   socketNotificationReceived(notification, payload) {
+    console.log("MMM-SimpleGraph: socketNotificationReceived:", notification);
+
     if (notification === "DATA_LOADED") {
+      console.log("MMM-SimpleGraph: DATA_LOADED received, payload length:",
+        Array.isArray(payload) ? payload.length : "not array");
+
       this.dataPoints = Array.isArray(payload) ? payload : [];
       this.updateDom();
     }
   },
 
   getDom() {
+    console.log("MMM-SimpleGraph: getDom() called");
+
     const wrapper = document.createElement("div");
     const canvas = document.createElement("canvas");
 
@@ -47,7 +62,12 @@ Module.register("MMM-SimpleGraph", {
   },
 
   drawChart(canvas) {
-    if (!this.dataPoints || this.dataPoints.length === 0) return;
+    console.log("MMM-SimpleGraph: drawChart() called");
+
+    if (!this.dataPoints || this.dataPoints.length === 0) {
+      console.log("MMM-SimpleGraph: no dataPoints to draw");
+      return;
+    }
 
     const points = this.dataPoints.map(d => ({
       x: new Date(d.date),
@@ -55,7 +75,10 @@ Module.register("MMM-SimpleGraph", {
     }));
 
     const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    if (!ctx) {
+      console.log("MMM-SimpleGraph: no canvas context");
+      return;
+    }
 
     new Chart(ctx, {
       type: "line",
